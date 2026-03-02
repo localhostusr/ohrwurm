@@ -1,12 +1,15 @@
 import { Clock } from "lucide-react";
 import type { Track } from "../data/types";
+import type { StreamingPlatform } from "../hooks/usePlatform";
 import { SpotifyEmbed } from "./SpotifyEmbed";
+import { AppleMusicEmbed } from "./AppleMusicEmbed";
 
 interface TrackCardProps {
   track: Track;
+  platform: StreamingPlatform;
 }
 
-export function TrackCard({ track }: TrackCardProps) {
+export function TrackCard({ track, platform }: TrackCardProps) {
   const { programNotes } = track;
 
   return (
@@ -33,9 +36,13 @@ export function TrackCard({ track }: TrackCardProps) {
         </div>
       </div>
 
-      {/* Spotify embed */}
+      {/* Embed player */}
       <div className="ml-12 mb-5">
-        <SpotifyEmbed trackId={track.spotifyId} />
+        {platform === "spotify" ? (
+          <SpotifyEmbed trackId={track.spotifyId} />
+        ) : (
+          <AppleMusicEmbed trackId={track.appleMusicId} />
+        )}
       </div>
 
       {/* Program notes — always visible */}

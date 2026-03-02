@@ -14,6 +14,7 @@ export interface Track {
   chapter: string;
   side: Side;
   spotifyId: string | null;
+  appleMusicId: string | null;
   programNotes: ProgramNotes;
 }
 
