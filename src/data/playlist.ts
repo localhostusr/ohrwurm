@@ -908,7 +908,7 @@ export const playlist: Track[] = [
     side: "F",
     spotifyId: "52UcjsM15hjCQAUbTW2hy1",
     appleMusicId: "1556921231",
-    youtubeId: "FyYMzEJ-dDE",
+    youtubeId: "FyYMzEplnfU",
     programNotes: {
       notes: "This is the loudest, most disorienting track on the list — and it's intentional. Shoegaze at its most extreme. The guitar is a wall of noise with a melody hiding inside it.",
       listenFor: "The melody is buried under the wall of guitar on purpose. The headphones will find it if you give them the volume. Play it louder than you think you should. On planars, the layers of guitar feedback separate into individual textures.",
