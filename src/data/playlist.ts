@@ -666,7 +666,7 @@ export const playlist: Track[] = [
     side: "D",
     spotifyId: "5vIu19A3EEdHgFM4Cba6F4",
     appleMusicId: "1738937698",
-    youtubeId: "bSGx23jczGk",
+    youtubeId: "bRChz-OYi9o",
     programNotes: {
       notes: "Bay Area hyphy meets trunk-rattling bass. E-40 has been innovating in hip-hop since the late '80s, and this track is pure groove — head-nodding, unavoidable bass weight.",
       listenFor: "The 808 kick drum — it's pitched low and sustained long, designed for car subwoofers. On planars, you'll feel it in a way earbuds can't reproduce. The snap of the snare is crisp and sits perfectly against the bass.",
