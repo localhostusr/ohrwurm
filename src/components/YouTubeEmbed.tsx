@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Play, Pause, ExternalLink, Search, AlertTriangle, ChevronDown } from "lucide-react";
 import type { Track } from "../data/types";
 import { usePlayback } from "../context/PlaybackContext";
@@ -23,79 +23,110 @@ export function YouTubeEmbed({ track }: YouTubeEmbedProps) {
 
   const isActive = activeYoutubeTrackId === track.id;
   const wrapperRef = useRef<HTMLDivElement>(null);
-  // hostRef is the stable div React manages; the YT.Player iframe goes inside it
+  // hostRef is always in the DOM (hidden when inactive) so the click handler
+  // can create the YT.Player synchronously — preserving the user-gesture chain
+  // that mobile browsers require for autoplay.
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YT.Player | null>(null);
+  const destroyedRef = useRef(false);
+  const createdInClickRef = useRef(false);
   const [embedError, setEmbedError] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
-  // Create YT.Player when this track becomes active
+  // Build a YT.Player inside the host div
+  const createPlayer = useCallback(() => {
+    if (!hostRef.current || !track.youtubeId || !window.YT?.Player) return false;
+
+    hostRef.current.innerHTML = "";
+    destroyedRef.current = false;
+
+    const target = document.createElement("div");
+    hostRef.current.appendChild(target);
+
+    new window.YT.Player(target, {
+      videoId: track.youtubeId,
+      width: "100%",
+      height: 220,
+      playerVars: {
+        autoplay: 1,
+        rel: 0,
+        modestbranding: 1,
+        playsinline: 1,
+      },
+      events: {
+        onReady: (event) => {
+          if (destroyedRef.current) return;
+          playerRef.current = event.target;
+          registerYoutubePlayer(event.target);
+          event.target.setVolume(volume * 100);
+          if (track.youtubeStart) {
+            event.target.seekTo(track.youtubeStart, true);
+          }
+        },
+        onStateChange: (event) => {
+          if (destroyedRef.current) return;
+          const state = event.data;
+          if (state === YT.PlayerState.PLAYING) {
+            setYoutubePlayState(true);
+          } else if (state === YT.PlayerState.PAUSED) {
+            setYoutubePlayState(false);
+          } else if (state === YT.PlayerState.ENDED) {
+            setYoutubePlayState(false);
+            if (autoAdvance) advanceYoutube();
+          }
+        },
+        onError: (event) => {
+          if (destroyedRef.current) return;
+          const code = event.data;
+          if (code === 101 || code === 150 || code === 100) {
+            setEmbedError(true);
+            setYoutubePlayState(false);
+          }
+        },
+      },
+    });
+
+    return true;
+  }, [track.youtubeId, track.youtubeStart, volume, registerYoutubePlayer, setYoutubePlayState, autoAdvance, advanceYoutube]);
+
+  // Click handler — create player in user-gesture chain so mobile autoplay works
+  const handleActivate = useCallback(() => {
+    if (!track.youtubeId) return;
+    setEmbedError(false);
+    playYoutubeTrack(track.id);
+
+    // Create immediately if API is ready (synchronous = keeps gesture chain)
+    if (createPlayer()) {
+      createdInClickRef.current = true;
+    }
+  }, [track.id, track.youtubeId, playYoutubeTrack, createPlayer]);
+
+  // Fallback creation (API wasn't loaded at click time) + cleanup on deactivation
   useEffect(() => {
     if (!isActive || !track.youtubeId) return;
 
-    let destroyed = false;
+    let localDestroyed = false;
 
-    async function init() {
-      await loadYouTubeAPI();
-      if (destroyed || !hostRef.current) return;
-
-      // Create a throwaway div inside the stable host — YT.Player replaces it
-      const target = document.createElement("div");
-      hostRef.current.appendChild(target);
-
-      new window.YT.Player(target, {
-        videoId: track.youtubeId!,
-        width: "100%",
-        height: 220,
-        playerVars: {
-          autoplay: 1,
-          rel: 0,
-          modestbranding: 1,
-        },
-        events: {
-          onReady: (event) => {
-            if (destroyed) return;
-            playerRef.current = event.target;
-            registerYoutubePlayer(event.target);
-            event.target.setVolume(volume * 100);
-            if (track.youtubeStart) {
-              event.target.seekTo(track.youtubeStart, true);
-            }
-          },
-          onStateChange: (event) => {
-            if (destroyed) return;
-            const state = event.data;
-            if (state === YT.PlayerState.PLAYING) {
-              setYoutubePlayState(true);
-            } else if (state === YT.PlayerState.PAUSED) {
-              setYoutubePlayState(false);
-            } else if (state === YT.PlayerState.ENDED) {
-              setYoutubePlayState(false);
-              if (autoAdvance) advanceYoutube();
-            }
-          },
-          onError: (event) => {
-            if (destroyed) return;
-            const code = event.data;
-            if (code === 101 || code === 150 || code === 100) {
-              setEmbedError(true);
-              setYoutubePlayState(false);
-            }
-          },
-        },
-      });
+    if (createdInClickRef.current) {
+      // Player was already created in click handler — skip
+      createdInClickRef.current = false;
+    } else {
+      // API wasn't ready during click — load async and create
+      (async () => {
+        await loadYouTubeAPI();
+        if (localDestroyed || !hostRef.current) return;
+        setEmbedError(false);
+        createPlayer();
+      })();
     }
 
-    setEmbedError(false);
-    init();
-
     return () => {
-      destroyed = true;
+      localDestroyed = true;
+      destroyedRef.current = true;
       if (playerRef.current) {
         try { playerRef.current.destroy(); } catch {}
         playerRef.current = null;
       }
-      // Clean up any leftover DOM inside the host
       if (hostRef.current) hostRef.current.innerHTML = "";
       registerYoutubePlayer(null);
     };
@@ -144,41 +175,46 @@ export function YouTubeEmbed({ track }: YouTubeEmbedProps) {
 
   return (
     <div ref={wrapperRef}>
-      {isActive ? (
-        embedError ? (
-          <div className="w-full h-[220px] rounded-lg bg-surface border border-border flex flex-col items-center justify-center gap-3 text-center px-4">
-            <AlertTriangle className="w-8 h-8 text-text-muted" />
-            <p className="text-sm text-text-muted">
-              This video can't be embedded. Open it directly:
-            </p>
-            <div className="flex items-center gap-3">
-              <a
-                href={`https://music.youtube.com/watch?v=${track.youtubeId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-500 transition-colors"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                YouTube Music
-              </a>
-              <a
-                href={`https://www.youtube.com/watch?v=${track.youtubeId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-surface-hover text-text-secondary hover:text-text-primary border border-border transition-colors"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                YouTube
-              </a>
-            </div>
+      {/* Error fallback */}
+      {isActive && embedError && (
+        <div className="w-full h-[220px] rounded-lg bg-surface border border-border flex flex-col items-center justify-center gap-3 text-center px-4">
+          <AlertTriangle className="w-8 h-8 text-text-muted" />
+          <p className="text-sm text-text-muted">
+            This video can't be embedded. Open it directly:
+          </p>
+          <div className="flex items-center gap-3">
+            <a
+              href={`https://music.youtube.com/watch?v=${track.youtubeId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-500 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              YouTube Music
+            </a>
+            <a
+              href={`https://www.youtube.com/watch?v=${track.youtubeId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-surface-hover text-text-secondary hover:text-text-primary border border-border transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              YouTube
+            </a>
           </div>
-        ) : (
-          // Stable host div — YT.Player iframe is appended inside via useEffect
-          <div ref={hostRef} className="rounded-lg overflow-hidden" />
-        )
-      ) : (
+        </div>
+      )}
+
+      {/* Host div always in DOM so click handler can create player synchronously */}
+      <div
+        ref={hostRef}
+        className={`rounded-lg overflow-hidden ${(!isActive || embedError) ? "hidden" : ""}`}
+      />
+
+      {/* Thumbnail (only when not active) */}
+      {!isActive && (
         <button
-          onClick={() => playYoutubeTrack(track.id)}
+          onClick={handleActivate}
           className="relative w-full h-[220px] rounded-lg overflow-hidden group cursor-pointer bg-black"
         >
           <img
