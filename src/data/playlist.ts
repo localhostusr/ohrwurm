@@ -88,7 +88,7 @@ export const playlist: Track[] = [
     side: "A",
     spotifyId: "2GpBrAoCwt48fxjgjlzMd4",
     appleMusicId: "1453925093",
-    youtubeId: "kuFu_s46AcI",
+    youtubeId: "c76F4WpiOGQ",
     programNotes: {
       notes: "You've heard this song a thousand times. You've never heard it like this. The live version strips away studio polish and drops you into an arena.",
       listenFor: "The 12-string guitar intro — on quality headphones, each string has its own position in the stereo field. You can pinpoint where each musician is standing on stage.",
