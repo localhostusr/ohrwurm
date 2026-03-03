@@ -329,7 +329,8 @@ export const playlist: Track[] = [
     side: "B",
     spotifyId: "4jggSeOIIXdrIXrzrZOBVf",
     appleMusicId: "883897592",
-    youtubeId: "bEmVKAZkjpQ",
+    youtubeId: "QQrzggb9qSY",
+    youtubeStart: 622,
     programNotes: {
       notes: "The first movement of Summer — ominous, tense, building toward a storm. The solo violin carries the narrative entirely.",
       listenFor: "Jansen's bow pressure and vibrato. On quality headphones, you can hear the rosin on the strings, the physical effort of the instrument. The ensemble responds to her dynamics in real time.",
@@ -347,7 +348,8 @@ export const playlist: Track[] = [
     side: "B",
     spotifyId: "2585tm5FEqfRzNskDHmu5q",
     appleMusicId: "883897593",
-    youtubeId: "agpa1LLHxxw",
+    youtubeId: "QQrzggb9qSY",
+    youtubeStart: 941,
     programNotes: {
       notes: "Two minutes of tension. The slow section drips with heat exhaustion before the storm breaks. Vivaldi wrote this as program music — he was scoring weather.",
       listenFor: "The contrast between the languid Adagio and the sudden Presto eruption. The dynamic shift is enormous. Your headphones will tell you how fast they can respond to transients.",
@@ -365,7 +367,8 @@ export const playlist: Track[] = [
     side: "B",
     spotifyId: "0Go4cVHryJLcpY2pZVkV3A",
     appleMusicId: "883897594",
-    youtubeId: "Y4LDMkn5Nkg",
+    youtubeId: "QQrzggb9qSY",
+    youtubeStart: 1074,
     programNotes: {
       notes: "The storm arrives. Furious, relentless, and virtuosic. This is 1725 thrash metal played on gut strings.",
       listenFor: "The speed of Jansen's bow work and the precision of the ensemble. On resolving headphones, even at this tempo, you can distinguish individual instruments. The bass section rumbles like distant thunder.",
