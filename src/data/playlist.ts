@@ -888,7 +888,7 @@ export const playlist: Track[] = [
     side: "E",
     spotifyId: "58wDfZrOByUJpigigbi34A",
     appleMusicId: "1824106741",
-    youtubeId: "tKi9Z-f6qX4",
+    youtubeId: "BKKGEvLgzqc",
     programNotes: {
       notes: "A 10-minute emotional arc built from digital synthesis. Patient, beautiful, and proof that electronic music can be as moving as any orchestral piece.",
       listenFor: "At 2:35, a white noise sweep enters — a filtered noise riser used as a transition tool. On resolving headphones, you'll hear it clearly for possibly the first time. It sounds digital and processed because it is — generated inside a software synth in 2009. The build is glacial and the payoff is immense.",
