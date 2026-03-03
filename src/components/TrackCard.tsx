@@ -31,10 +31,6 @@ export function TrackCard({ track, trackRef }: TrackCardProps) {
 
   const { programNotes } = track;
 
-  // Deep link URLs
-  const spotifyUrl = track.spotifyId
-    ? `https://open.spotify.com/track/${track.spotifyId}`
-    : null;
   const appleMusicUrl = track.appleMusicId
     ? `https://music.apple.com/us/song/${track.appleMusicId}`
     : null;
