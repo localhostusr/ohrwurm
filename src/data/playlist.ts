@@ -926,7 +926,7 @@ export const playlist: Track[] = [
     side: "F",
     spotifyId: "7tvuLLroI0n6uYBWuFig5d",
     appleMusicId: "1474185845",
-    youtubeId: "EDlC7oG_2W4",
+    youtubeId: "Y7JG63IuaWs",
     programNotes: {
       notes: "Nine and a half minutes of progressive metal structured around the Fibonacci sequence. This is the most mathematically complex song on the list — and the most physically powerful.",
       listenFor: "The time signature follows the Fibonacci sequence — 1, 1, 2, 3, 5, 8, 13. Maynard's vocal syllables follow it too. Your brain feels the pattern before your conscious mind catches up. Listen with eyes closed. Don't try to count or analyze on first listen.",
