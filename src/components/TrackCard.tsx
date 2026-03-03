@@ -131,34 +131,35 @@ export function TrackCard({ track, trackRef }: TrackCardProps) {
         </div>
       )}
 
-      {/* Deep links for companion modes */}
-      {(platform === "apple-music" && appleMusicReady) ||
-      (platform === "spotify" && !canPlayInBrowser) ? (
-        <div className="ml-12 mb-5 flex flex-wrap gap-3">
-          {platform === "apple-music" && appleMusicUrl && (
-            <a
-              href={appleMusicUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-surface hover:bg-surface-hover text-text-secondary hover:text-text-primary border border-border-subtle transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Apple Music
-            </a>
-          )}
-          {platform === "spotify" && spotifyUrl && !canPlayInBrowser && (
-            <a
-              href={spotifyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-surface hover:bg-surface-hover text-text-secondary hover:text-text-primary border border-border-subtle transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Open in Spotify
-            </a>
-          )}
+      {/* Spotify embed (when SDK can't play) */}
+      {platform === "spotify" && !canPlayInBrowser && track.spotifyId && (
+        <div className="ml-12 mb-5">
+          <iframe
+            src={`https://open.spotify.com/embed/track/${track.spotifyId}?utm_source=generator&theme=0`}
+            width="100%"
+            height="152"
+            frameBorder="0"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"
+            className="rounded-lg"
+          />
         </div>
-      ) : null}
+      )}
+
+      {/* Apple Music deep links */}
+      {platform === "apple-music" && appleMusicReady && appleMusicUrl && (
+        <div className="ml-12 mb-5">
+          <a
+            href={appleMusicUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-surface hover:bg-surface-hover text-text-secondary hover:text-text-primary border border-border-subtle transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Apple Music
+          </a>
+        </div>
+      )}
 
       {/* Program notes */}
       <div className="ml-12 grid gap-5 md:grid-cols-3">

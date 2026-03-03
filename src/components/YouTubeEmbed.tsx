@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, ExternalLink, Search, AlertTriangle } from "lucide-react";
+import { Play, Pause, ExternalLink, Search, AlertTriangle, ChevronDown } from "lucide-react";
 import type { Track } from "../data/types";
 import { usePlayback } from "../context/PlaybackContext";
 import { loadYouTubeAPI } from "../lib/youtube-player";
@@ -15,13 +15,17 @@ export function YouTubeEmbed({ track }: YouTubeEmbedProps) {
     registerYoutubePlayer,
     setYoutubePlayState,
     advanceYoutube,
+    togglePlayPause,
+    isPlaying,
     volume,
   } = usePlayback();
 
   const isActive = activeYoutubeTrackId === track.id;
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YT.Player | null>(null);
   const [embedError, setEmbedError] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   // Create YT.Player when this track becomes active
   useEffect(() => {
@@ -33,7 +37,7 @@ export function YouTubeEmbed({ track }: YouTubeEmbedProps) {
       await loadYouTubeAPI();
       if (destroyed || !containerRef.current) return;
 
-      const player = new window.YT.Player(containerRef.current, {
+      new window.YT.Player(containerRef.current, {
         videoId: track.youtubeId!,
         width: "100%",
         height: 220,
@@ -63,7 +67,6 @@ export function YouTubeEmbed({ track }: YouTubeEmbedProps) {
           },
           onError: (event) => {
             if (destroyed) return;
-            // 101/150 = embedding blocked, 100 = not found
             const code = event.data;
             if (code === 101 || code === 150 || code === 100) {
               setEmbedError(true);
@@ -87,15 +90,32 @@ export function YouTubeEmbed({ track }: YouTubeEmbedProps) {
     };
   }, [isActive, track.youtubeId]);
 
+  // IntersectionObserver for sticky mini-player
+  useEffect(() => {
+    if (!isActive) {
+      setIsVisible(true);
+      return;
+    }
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isActive]);
+
   if (!track.youtubeId) return null;
 
   const searchQuery = encodeURIComponent(`${track.artist} ${track.title}`);
+  const showStickyBar = isActive && isPlaying && !isVisible && !embedError;
 
   return (
-    <div>
+    <div ref={wrapperRef}>
       {isActive ? (
         embedError ? (
-          // Fallback for non-embeddable videos
           <div className="w-full h-[220px] rounded-lg bg-surface border border-border flex flex-col items-center justify-center gap-3 text-center px-4">
             <AlertTriangle className="w-8 h-8 text-text-muted" />
             <p className="text-sm text-text-muted">
@@ -123,11 +143,9 @@ export function YouTubeEmbed({ track }: YouTubeEmbedProps) {
             </div>
           </div>
         ) : (
-          // YT.Player renders into this div
           <div ref={containerRef} className="rounded-lg overflow-hidden" />
         )
       ) : (
-        // Thumbnail with play button
         <button
           onClick={() => playYoutubeTrack(track.id)}
           className="relative w-full h-[220px] rounded-lg overflow-hidden group cursor-pointer bg-black"
@@ -144,6 +162,7 @@ export function YouTubeEmbed({ track }: YouTubeEmbedProps) {
           </div>
         </button>
       )}
+
       <div className="flex items-center gap-3 mt-2">
         <a
           href={`https://music.youtube.com/watch?v=${track.youtubeId}`}
@@ -173,6 +192,41 @@ export function YouTubeEmbed({ track }: YouTubeEmbedProps) {
           More versions
         </a>
       </div>
+
+      {/* Sticky mini-player when scrolled past */}
+      {showStickyBar && (
+        <div className="fixed bottom-14 left-0 right-0 z-40 bg-surface/95 backdrop-blur-md border-t border-border shadow-lg">
+          <div className="max-w-5xl mx-auto px-4 py-2 flex items-center gap-3">
+            <img
+              src={`https://img.youtube.com/vi/${track.youtubeId}/default.jpg`}
+              alt=""
+              className="w-10 h-10 rounded object-cover"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-text-primary truncate font-medium">{track.title}</p>
+              <p className="text-xs text-text-muted truncate">{track.artist}</p>
+            </div>
+            <button
+              onClick={togglePlayPause}
+              className="p-2 bg-red-600 text-white rounded-full hover:bg-red-500 transition-colors"
+              aria-label={isPlaying ? "Pause" : "Play"}
+            >
+              {isPlaying ? (
+                <Pause className="w-4 h-4" />
+              ) : (
+                <Play className="w-4 h-4 ml-0.5" />
+              )}
+            </button>
+            <button
+              onClick={() => wrapperRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
+              className="p-2 text-text-muted hover:text-text-primary transition-colors"
+              aria-label="Scroll to video"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
